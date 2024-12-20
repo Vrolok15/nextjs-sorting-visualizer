@@ -102,6 +102,7 @@ export default function Home() {
         swapped = false;
         for (j = 0; j < newArray.length - i - 1; j++) {
           if (shouldStopRef.current) return;
+          playNote(200 + newArray[j] * 2, getDelay(DELAYS.COMPARE));
           setComparing([j, j + 1]);
           await delay(getDelay(DELAYS.COMPARE));
           
@@ -427,12 +428,12 @@ export default function Home() {
         )}
         {!isSorting && (
         <div className={styles.controls}>
-          <label htmlFor="arraySize">Array Size: {arraySize}</label>
+          <label className={styles.label} htmlFor="arraySize">Array Size: {arraySize}</label>
           <input 
             id="arraySize"
             type="range" 
             min="10" 
-            max="100" 
+            max={window.innerWidth <= 768 ? "50" : "100"} 
             value={arraySize}
             onChange={handleSliderChange}
             className={styles.slider} 
@@ -446,7 +447,7 @@ export default function Home() {
         </div>
         )}
         <div className={styles.controls}>
-          <label htmlFor="speed">Speed: {speed}x</label>
+          <label className={styles.label} htmlFor="speed">Speed: {speed}x</label>
           <input 
             id="speed"
             type="range" 

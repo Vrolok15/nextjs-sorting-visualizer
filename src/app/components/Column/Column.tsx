@@ -19,7 +19,7 @@ export default function Column({ height, width, isComparing, isComplete, isSwapp
   return (
     <div
       style={{
-        height: `${height * 2}px`,
+        height: `${window.innerWidth <= 768 ? height : height * 2}px`,
         width: `${width}px`,
         backgroundColor: getColor(),
         margin: '0 1px'
