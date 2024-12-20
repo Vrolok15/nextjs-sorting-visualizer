@@ -20,7 +20,7 @@ export default function Home() {
     shouldStopRef.current = true;
     setIsSorting(false);
     const newArray = Array.from({ length: arraySize }, 
-      () => Math.floor(Math.random() * 256) + 1
+      () => Math.floor(Math.random() * 256) + 10
     );
     setArray(newArray);
     setSorted(false);
@@ -128,6 +128,42 @@ export default function Home() {
     }
   };
 
+  const insertionSort = async () => {
+    shouldStopRef.current = false;
+    setIsSorting(true);
+    try {
+      const newArray = [...array];
+      for (let i = 1; i < newArray.length; i++) {
+        let insertionIndex = i;
+        let currentValue = newArray.splice(i, 1)[0];
+        for (let j = i - 1; j >= 0; j--) {
+          if (shouldStopRef.current) return;
+          setComparing([j, i]);
+          await delay(800 / newArray.length);
+          if (newArray[j] > currentValue) {
+            insertionIndex = j;
+          }
+          setComparing([]);
+        }
+        newArray.splice(insertionIndex, 0, currentValue);
+        setArray([...newArray]);
+        setSwapping([i, insertionIndex]);
+        await delay(400 / newArray.length);
+        setSwapping([]);
+      }
+      if (!shouldStopRef.current) {
+        for (let i = 0; i < newArray.length; i++) {
+          if (shouldStopRef.current) return;
+          setComplete(prev => [...prev, i]);
+          await delay(50);
+        }
+        setSorted(true);
+      }
+    } finally {
+      setIsSorting(false);
+    }
+  };
+
   useEffect(() => {
     setMounted(true);
     const handleResize = () => {
@@ -173,7 +209,7 @@ export default function Home() {
             <p>Array sorted!</p>
           </div>
         )}
-        {!isSorting && !sorted && (
+        {array.length > 0 && !isSorting && !sorted && (
           <div className={`${styles.controls} ${styles.sorts}`}>
             <button 
               className={styles.button}
@@ -189,10 +225,16 @@ export default function Home() {
             >
               Selection Sort
             </button>
+            <button 
+              className={styles.button} 
+              onClick={insertionSort}
+              disabled={isSorting}
+            >
+              Insertion Sort
+            </button>
             <button className={styles.button} disabled={isSorting}>Merge Sort</button>
             <button className={styles.button} disabled={isSorting}>Quick Sort</button>
             <button className={styles.button} disabled={isSorting}>Heap Sort</button>
-            <button className={styles.button} disabled={isSorting}>Insertion Sort</button>
             <button className={styles.button} disabled={isSorting}>Radix Sort</button>
           </div>
         )}
