@@ -6,7 +6,17 @@ import { useState, useEffect } from 'react';
 export default function Home() {
   const [arraySize, setArraySize] = useState<number>(10);
   const [mounted, setMounted] = useState(false);
-  let [sorted, setSorted] = useState<boolean>(false);
+  const [sorted, setSorted] = useState<boolean>(false);
+  const [array, setArray] = useState<number[]>([]);
+
+  const generateArray = () => {
+    const newArray = Array.from({ length: arraySize }, 
+      () => Math.floor(Math.random() * 256)
+    );
+    setArray(newArray);
+    setSorted(false);
+    console.log(newArray);
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -44,7 +54,12 @@ export default function Home() {
             onChange={handleSliderChange}
             className={styles.slider} 
           />
-          <button className={styles.button}>Generate random array</button>
+          <button 
+            className={styles.button}
+            onClick={generateArray}
+          >
+            Generate random array
+          </button>
         </div>
       </main>
       <footer className={styles.footer}>
