@@ -5,11 +5,13 @@ interface ColumnProps {
   width: number;
   isComparing?: boolean;
   isComplete?: boolean;
+  isSwapping?: boolean;
 }
 
-export default function Column({ height, width, isComparing, isComplete }: ColumnProps) {
+export default function Column({ height, width, isComparing, isComplete, isSwapping }: ColumnProps) {
   const getColor = () => {
     if (isComplete) return 'var(--color-white)';
+    if (isSwapping) return 'var(--color-white)';
     if (isComparing) return 'var(--color-red)';
     return 'var(--color-primary)';
   };

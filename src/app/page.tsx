@@ -1,7 +1,7 @@
 "use client";
 
 import styles from './page.module.css';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Column from './components/Column/Column';
 
 export default function Home() {
@@ -13,8 +13,11 @@ export default function Home() {
   const [comparing, setComparing] = useState<number[]>([]);
   const [complete, setComplete] = useState<number[]>([]);
   const [isSorting, setIsSorting] = useState<boolean>(false);
+  const [swapping, setSwapping] = useState<number[]>([]);
+  const shouldStopRef = useRef<boolean>(false);
 
   const generateArray = () => {
+    shouldStopRef.current = true;
     setIsSorting(false);
     const newArray = Array.from({ length: arraySize }, 
       () => Math.floor(Math.random() * 256) + 1
@@ -24,12 +27,13 @@ export default function Home() {
     setColumnWidth(Math.floor((window.innerWidth * 0.75) / arraySize));
     setComparing([]);
     setComplete([]);
+    setSwapping([]);
   };
 
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   const bubbleSort = async () => {
-    if (isSorting) return;
+    shouldStopRef.current = false;
     setIsSorting(true);
 
     try {
@@ -40,30 +44,85 @@ export default function Home() {
       const newArray = [...array];
 
       for (i = 0; i < newArray.length; i++) {
+        if (shouldStopRef.current) return;
         swapped = false;
         for (j = 0; j < newArray.length - i - 1; j++) {
+          if (shouldStopRef.current) return;
           setComparing([j, j + 1]);
           await delay(500 /newArray.length);
           
           if (newArray[j] > newArray[j + 1]) {
+            if (shouldStopRef.current) return;
             temp = newArray[j];
             newArray[j] = newArray[j + 1];
             newArray[j + 1] = temp;
             swapped = true;
             setArray([...newArray]);
+            setSwapping([j, j + 1]);
+            await delay(400 /newArray.length);
+            
+            setSwapping([]);
           }
         }
         setComparing([]);
         if (!swapped) break;
       }
-      for (i = 0; i < newArray.length; i++) {
-        setComplete(prev => [...prev, i]);
-        await delay(50);
+      if (!shouldStopRef.current) {
+        for (i = 0; i < newArray.length; i++) {
+          if (shouldStopRef.current) return;
+          setComplete(prev => [...prev, i]);
+          await delay(50);
+        }
+        setSorted(true);
+        await delay(100);
+        setComparing([]);
+        setComplete([]);
       }
-      setSorted(true);
-      await delay(100);
-      setComparing([]);
-      setComplete([]);
+    } finally {
+      setIsSorting(false);
+    }
+  };
+
+  const selectionSort = async () => {
+    shouldStopRef.current = false;
+    setIsSorting(true);
+    try {
+      let minIndex: number;
+      let minValue: number;
+      const newArray = [...array];
+
+      for (let i = 0; i < newArray.length; i++) {
+        if (shouldStopRef.current) return;
+        minIndex = i;
+        for (let j = i + 1; j < newArray.length; j++) {
+          if (shouldStopRef.current) return;
+          if (newArray[j] < newArray[minIndex]) {
+            minIndex = j;
+          }
+          setComparing([j, minIndex]);
+          await delay(800 / newArray.length);
+        }
+        
+        if (shouldStopRef.current) return;
+        minValue = newArray.splice(minIndex, 1)[0];
+        newArray.splice(i, 0, minValue);
+        setArray([...newArray]);
+        setSwapping([i, minIndex]);
+        await delay(400 / newArray.length);
+        
+        setSwapping([]);
+        setComparing([]);
+      }
+      if (!shouldStopRef.current) {
+        for (let i = 0; i < newArray.length; i++) {
+          if (shouldStopRef.current) return;
+          setComplete(prev => [...prev, i]);
+          await delay(50);
+        }
+        setSorted(true);
+        await delay(100);
+        setComplete([]);
+      }
     } finally {
       setIsSorting(false);
     }
@@ -99,9 +158,16 @@ export default function Home() {
               width={columnWidth}
               isComparing={comparing.includes(index)}
               isComplete={complete.includes(index)}
+              isSwapping={swapping.includes(index)}
             />
           ))}
         </div>
+        {isSorting && !sorted && (
+          <div className={`${styles.controls} ${styles.sorted}`}>
+            <p>Sorting...</p>
+            <button className={styles.button} onClick={() => shouldStopRef.current = true}>Stop</button>
+          </div>
+        )}
         {sorted && (
           <div className={`${styles.controls} ${styles.sorted}`}>
             <p>Array sorted!</p>
@@ -116,14 +182,21 @@ export default function Home() {
             >
               Bubble Sort
             </button>
+            <button 
+              className={styles.button} 
+              onClick={selectionSort}
+              disabled={isSorting}
+            >
+              Selection Sort
+            </button>
             <button className={styles.button} disabled={isSorting}>Merge Sort</button>
             <button className={styles.button} disabled={isSorting}>Quick Sort</button>
             <button className={styles.button} disabled={isSorting}>Heap Sort</button>
             <button className={styles.button} disabled={isSorting}>Insertion Sort</button>
-            <button className={styles.button} disabled={isSorting}>Selection Sort</button>
             <button className={styles.button} disabled={isSorting}>Radix Sort</button>
           </div>
         )}
+        {!isSorting && (
         <div className={styles.controls}>
           <label htmlFor="arraySize">Array Size: {arraySize}</label>
           <input 
@@ -142,6 +215,7 @@ export default function Home() {
             Generate random array
           </button>
         </div>
+        )}
       </main>
       <footer className={styles.footer}>
         <p>

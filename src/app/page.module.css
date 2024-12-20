@@ -41,6 +41,11 @@
     color: var(--color-black);
 }
 
+.button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .slider{
     width: 40%;
     height: 10px;
