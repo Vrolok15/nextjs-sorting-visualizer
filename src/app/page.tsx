@@ -4,6 +4,14 @@ import styles from './page.module.css';
 import { useState, useEffect, useRef } from 'react';
 import Column from './components/Column/Column';
 
+// Base delay times in milliseconds
+const DELAYS = {
+  COMPARE: 800,
+  SWAP: 400,
+  COMPLETE: 50,
+  FINAL: 500
+} as const;
+
 export default function Home() {
   const [arraySize, setArraySize] = useState<number>(10);
   const [mounted, setMounted] = useState(false);
@@ -15,6 +23,9 @@ export default function Home() {
   const [isSorting, setIsSorting] = useState<boolean>(false);
   const [swapping, setSwapping] = useState<number[]>([]);
   const shouldStopRef = useRef<boolean>(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const [speed, setSpeed] = useState<number>(5);
+  const speedRef = useRef<number>(5);
 
   const generateArray = () => {
     shouldStopRef.current = true;
@@ -28,9 +39,52 @@ export default function Home() {
     setComparing([]);
     setComplete([]);
     setSwapping([]);
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
   };
 
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  const playNote = (frequency: number, duration: number = 400 / array.length) => {
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      
+      const ctx = audioContextRef.current;
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+      
+      // Fade out to avoid clicks
+      gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + duration / 1000);
+      
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + duration / 1000);
+    } catch (error) {
+      console.error('Audio playback failed:', error);
+    }
+  };
+
+  const playCompletionAnimation = async (arr: number[]) => {
+    if (shouldStopRef.current) return;
+    
+    for (let i = 0; i < arr.length; i++) {
+      if (shouldStopRef.current) return;
+      setComplete(prev => [...prev, i]);
+      playNote(200 + arr[i] * 4, 100);
+      await delay(100);
+    }
+    setSorted(true);
+    playNote(1000, 500);
+  };
 
   const bubbleSort = async () => {
     shouldStopRef.current = false;
@@ -49,17 +103,18 @@ export default function Home() {
         for (j = 0; j < newArray.length - i - 1; j++) {
           if (shouldStopRef.current) return;
           setComparing([j, j + 1]);
-          await delay(500 /newArray.length);
+          await delay(getDelay(DELAYS.COMPARE));
           
           if (newArray[j] > newArray[j + 1]) {
             if (shouldStopRef.current) return;
+            playNote(200 + newArray[j] * 2, getDelay(DELAYS.COMPARE));
             temp = newArray[j];
             newArray[j] = newArray[j + 1];
             newArray[j + 1] = temp;
             swapped = true;
             setArray([...newArray]);
             setSwapping([j, j + 1]);
-            await delay(400 /newArray.length);
+            await delay(getDelay(DELAYS.SWAP));
             
             setSwapping([]);
           }
@@ -68,15 +123,7 @@ export default function Home() {
         if (!swapped) break;
       }
       if (!shouldStopRef.current) {
-        for (i = 0; i < newArray.length; i++) {
-          if (shouldStopRef.current) return;
-          setComplete(prev => [...prev, i]);
-          await delay(50);
-        }
-        setSorted(true);
-        await delay(100);
-        setComparing([]);
-        setComplete([]);
+        await playCompletionAnimation(newArray);
       }
     } finally {
       setIsSorting(false);
@@ -99,8 +146,9 @@ export default function Home() {
           if (newArray[j] < newArray[minIndex]) {
             minIndex = j;
           }
+          playNote(200 + newArray[j] * 2, getDelay(DELAYS.COMPARE));
           setComparing([j, minIndex]);
-          await delay(800 / newArray.length);
+          await delay(getDelay(DELAYS.COMPARE));
         }
         
         if (shouldStopRef.current) return;
@@ -108,20 +156,14 @@ export default function Home() {
         newArray.splice(i, 0, minValue);
         setArray([...newArray]);
         setSwapping([i, minIndex]);
-        await delay(400 / newArray.length);
+        playNote(200 + newArray[i] * 2, getDelay(DELAYS.SWAP));
+        await delay(getDelay(DELAYS.SWAP));
         
         setSwapping([]);
         setComparing([]);
       }
       if (!shouldStopRef.current) {
-        for (let i = 0; i < newArray.length; i++) {
-          if (shouldStopRef.current) return;
-          setComplete(prev => [...prev, i]);
-          await delay(50);
-        }
-        setSorted(true);
-        await delay(100);
-        setComplete([]);
+        await playCompletionAnimation(newArray);
       }
     } finally {
       setIsSorting(false);
@@ -139,25 +181,24 @@ export default function Home() {
         for (let j = i - 1; j >= 0; j--) {
           if (shouldStopRef.current) return;
           setComparing([j, i]);
-          await delay(800 / newArray.length);
+          await delay(getDelay(DELAYS.COMPARE));
           if (newArray[j] > currentValue) {
+            playNote(200 + newArray[j] * 2, getDelay(DELAYS.COMPARE));
             insertionIndex = j;
+          }
+          else {
+            playNote(200 + newArray[j] * 2, getDelay(DELAYS.COMPARE));
           }
           setComparing([]);
         }
         newArray.splice(insertionIndex, 0, currentValue);
         setArray([...newArray]);
         setSwapping([i, insertionIndex]);
-        await delay(400 / newArray.length);
+        await delay(getDelay(DELAYS.SWAP));
         setSwapping([]);
       }
       if (!shouldStopRef.current) {
-        for (let i = 0; i < newArray.length; i++) {
-          if (shouldStopRef.current) return;
-          setComplete(prev => [...prev, i]);
-          await delay(50);
-        }
-        setSorted(true);
+        await playCompletionAnimation(newArray);
       }
     } finally {
       setIsSorting(false);
@@ -174,16 +215,20 @@ export default function Home() {
       if (shouldStopRef.current) return;
       
       setComparing([j, pivot]);
-      await delay(800 / arr.length);
+      await delay(getDelay(DELAYS.COMPARE));
 
       if (arr[j] < pivot) {
+        playNote(200 + arr[j] * 2, getDelay(DELAYS.COMPARE));
         i++;
         // Swap elements
         setSwapping([i, j]);
         [arr[i], arr[j]] = [arr[j], arr[i]];
         setArray([...arr]);
-        await delay(400 / arr.length);
+        await delay(getDelay(DELAYS.SWAP));
         setSwapping([]);
+      }
+      else{
+        playNote(200 + arr[j] * 2, getDelay(DELAYS.COMPARE));
       }
       setComparing([]);
     }
@@ -192,7 +237,7 @@ export default function Home() {
     setSwapping([i + 1, high]);
     [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
     setArray([...arr]);
-    await delay(400 / arr.length);
+    await delay(getDelay(DELAYS.SWAP));
     setSwapping([]);
 
     return i + 1;
@@ -216,12 +261,7 @@ export default function Home() {
       } 
       await quickSortHelper(newArray, low, high);
       if (!shouldStopRef.current) {
-        for (let i = 0; i < newArray.length; i++) {
-          if (shouldStopRef.current) return;
-          setComplete(prev => [...prev, i]);
-          await delay(50);
-        }
-        setSorted(true);
+        await playCompletionAnimation(newArray);
       }
     } finally {
       setIsSorting(false);
@@ -266,9 +306,10 @@ export default function Home() {
       workingArray[currentIdx] = result[i];
       setArray([...workingArray]);
       setComparing([currentIdx, currentIdx + 1]);
-      await delay(800 / workingArray.length);
+      playNote(200 + workingArray[currentIdx] * 2, getDelay(DELAYS.COMPARE));
+      await delay(getDelay(DELAYS.COMPARE));
       setSwapping([currentIdx]);
-      await delay(400 / workingArray.length);
+      await delay(getDelay(DELAYS.SWAP));
       setSwapping([]);
     }
     
@@ -284,12 +325,7 @@ export default function Home() {
         const workingArray = [...array];
         await mergeSortHelper(workingArray, 0, workingArray);
         if (!shouldStopRef.current) {
-          for (let i = 0; i < workingArray.length; i++) {
-            if (shouldStopRef.current) return;
-            setComplete(prev => [...prev, i]);
-            await delay(50);
-          }
-          setSorted(true);
+          await playCompletionAnimation(workingArray);
         }
       }
     } finally {
@@ -312,6 +348,14 @@ export default function Home() {
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setArraySize(Number(e.target.value));
   };
+
+  const handleSpeedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newSpeed = Number(e.target.value);
+    setSpeed(newSpeed);
+    speedRef.current = newSpeed;
+  };
+
+  const getDelay = (baseDelay: number) => baseDelay / speedRef.current;
 
   if (!mounted) return null;
 
@@ -379,8 +423,6 @@ export default function Home() {
             >
               Merge Sort
             </button>
-            <button className={styles.button} disabled={isSorting}>Heap Sort</button>
-            <button className={styles.button} disabled={isSorting}>Radix Sort</button>
           </div>
         )}
         {!isSorting && (
@@ -403,6 +445,19 @@ export default function Home() {
           </button>
         </div>
         )}
+        <div className={styles.controls}>
+          <label htmlFor="speed">Speed: {speed}x</label>
+          <input 
+            id="speed"
+            type="range" 
+            min="1" 
+            max="50" 
+            step="0.5"
+            value={speed}
+            onChange={handleSpeedChange}
+            className={styles.slider} 
+          />
+        </div>
       </main>
       <footer className={styles.footer}>
         <p>
