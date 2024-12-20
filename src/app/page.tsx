@@ -228,6 +228,75 @@ export default function Home() {
     }
   };
 
+  const merge = async (left: number[], right: number[]): Promise<number[]> => {
+    const result: number[] = [];
+    let i = 0;
+    let j = 0;
+
+    while (i < left.length && j < right.length) {
+      if (left[i] < right[j]) {
+        result.push(left[i]);
+        i++;
+      } else {
+        result.push(right[j]);
+        j++;
+      }
+    }
+
+    return [...result, ...left.slice(i), ...right.slice(j)];
+  };
+
+  const mergeSortHelper = async (arr: number[], startIdx: number, workingArray: number[]): Promise<number[]> => {
+    if (arr.length <= 1) return arr;
+    
+    const mid = Math.floor(arr.length / 2);
+    const left = arr.slice(0, mid);
+    const right = arr.slice(mid);
+    
+    const sortedLeft = await mergeSortHelper(left, startIdx, workingArray);
+    const sortedRight = await mergeSortHelper(right, startIdx + mid, workingArray);
+    
+    const result = await merge(sortedLeft, sortedRight);
+    
+    // Update working array and visualize
+    for (let i = 0; i < result.length; i++) {
+      if (shouldStopRef.current) return result;
+      
+      const currentIdx = startIdx + i;
+      workingArray[currentIdx] = result[i];
+      setArray([...workingArray]);
+      setComparing([currentIdx, currentIdx + 1]);
+      await delay(800 / workingArray.length);
+      setSwapping([currentIdx]);
+      await delay(400 / workingArray.length);
+      setSwapping([]);
+    }
+    
+    setComparing([]);
+    return result;
+  };
+
+  const mergeSort = async () => {
+    shouldStopRef.current = false;
+    setIsSorting(true);
+    try {
+      if (!shouldStopRef.current) {
+        const workingArray = [...array];
+        await mergeSortHelper(workingArray, 0, workingArray);
+        if (!shouldStopRef.current) {
+          for (let i = 0; i < workingArray.length; i++) {
+            if (shouldStopRef.current) return;
+            setComplete(prev => [...prev, i]);
+            await delay(50);
+          }
+          setSorted(true);
+        }
+      }
+    } finally {
+      setIsSorting(false);
+    }
+  };
+
   useEffect(() => {
     setMounted(true);
     const handleResize = () => {
@@ -303,7 +372,13 @@ export default function Home() {
             >
               Quick Sort
             </button>
-            <button className={styles.button} disabled={isSorting}>Merge Sort</button>
+            <button 
+              className={styles.button} 
+              onClick={mergeSort}
+              disabled={isSorting}
+            >
+              Merge Sort
+            </button>
             <button className={styles.button} disabled={isSorting}>Heap Sort</button>
             <button className={styles.button} disabled={isSorting}>Radix Sort</button>
           </div>
