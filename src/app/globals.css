@@ -14,3 +14,11 @@ body {
   font-family: var(--font-oxanium);
   color: var(--color-white);
 }
+
+html, body {
+  height: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
