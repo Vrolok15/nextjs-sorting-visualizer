@@ -215,7 +215,7 @@ export default function Home() {
     for (let j = low; j < high; j++) {
       if (shouldStopRef.current) return;
       
-      setComparing([j, pivot]);
+      setComparing([j, high]);
       await delay(getDelay(DELAYS.COMPARE));
 
       if (arr[j] < pivot) {
