@@ -164,6 +164,70 @@ export default function Home() {
     }
   };
 
+  const partition = async (arr: number[], low: number, high: number) => {
+    if (shouldStopRef.current) return;
+    
+    const pivot = arr[high];
+    let i = low - 1;
+
+    for (let j = low; j < high; j++) {
+      if (shouldStopRef.current) return;
+      
+      setComparing([j, pivot]);
+      await delay(800 / arr.length);
+
+      if (arr[j] < pivot) {
+        i++;
+        // Swap elements
+        setSwapping([i, j]);
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+        setArray([...arr]);
+        await delay(400 / arr.length);
+        setSwapping([]);
+      }
+      setComparing([]);
+    }
+
+    // Place pivot in correct position
+    setSwapping([i + 1, high]);
+    [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
+    setArray([...arr]);
+    await delay(400 / arr.length);
+    setSwapping([]);
+
+    return i + 1;
+  };
+
+  const quickSort = async () => {
+    shouldStopRef.current = false;
+    setIsSorting(true);
+    try {
+      const newArray = [...array];
+      let low = 0;
+      let high = newArray.length - 1;
+      const quickSortHelper = async (arr: number[], low: number, high: number) => {
+        if (low < high) {
+          const pivotIndex = await partition(arr, low, high);
+          if (pivotIndex !== undefined) {
+            await quickSortHelper(arr, low, pivotIndex - 1);
+            await quickSortHelper(arr, pivotIndex + 1, high);
+          }
+        }
+      } 
+      await quickSortHelper(newArray, low, high);
+      if (!shouldStopRef.current) {
+        for (let i = 0; i < newArray.length; i++) {
+          if (shouldStopRef.current) return;
+          setComplete(prev => [...prev, i]);
+          await delay(50);
+        }
+        setSorted(true);
+      }
+    } finally {
+      setIsSorting(false);
+    }
+  };
+
   useEffect(() => {
     setMounted(true);
     const handleResize = () => {
@@ -232,8 +296,14 @@ export default function Home() {
             >
               Insertion Sort
             </button>
+            <button 
+              className={styles.button} 
+              onClick={quickSort}
+              disabled={isSorting}
+            >
+              Quick Sort
+            </button>
             <button className={styles.button} disabled={isSorting}>Merge Sort</button>
-            <button className={styles.button} disabled={isSorting}>Quick Sort</button>
             <button className={styles.button} disabled={isSorting}>Heap Sort</button>
             <button className={styles.button} disabled={isSorting}>Radix Sort</button>
           </div>
