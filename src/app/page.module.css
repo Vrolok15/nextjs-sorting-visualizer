@@ -72,11 +72,24 @@
     box-sizing: border-box;
 } 
 
+.descriptionTitle{
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.description{
+    font-size: 0.7rem;
+    width: 50%;
+    margin: 0;
+    padding: 0;
+}
+
 
 @media (max-width: 768px) {
     .title{
-        font-size: 1.5rem;
-        padding: 1rem;
+        font-size: 1.4rem;
+        padding: 0.6rem;
     }
 
     .button{
@@ -94,5 +107,16 @@
     .footer{
         padding: 0.5rem;
         font-size: 0.8rem;
+    }
+
+    .columns{
+        max-height: 500px;
+    }
+
+    .description{
+        font-size: 0.6rem;
+        width: 100%;
+        margin: 0;
+        padding: 0;
     }
 }

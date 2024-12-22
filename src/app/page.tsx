@@ -26,6 +26,7 @@ export default function Home() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const [speed, setSpeed] = useState<number>(5);
   const speedRef = useRef<number>(5);
+  const [sortingAlgorithm, setSortingAlgorithm] = useState<'bubble' | 'selection' | 'insertion' | 'quick' | 'merge' | null>(null);
 
   const generateArray = () => {
     shouldStopRef.current = true;
@@ -89,7 +90,7 @@ export default function Home() {
   const bubbleSort = async () => {
     shouldStopRef.current = false;
     setIsSorting(true);
-
+    setSortingAlgorithm('bubble');
     try {
       let i: number;
       let j: number;
@@ -128,12 +129,14 @@ export default function Home() {
       }
     } finally {
       setIsSorting(false);
+      setSortingAlgorithm(null);
     }
   };
 
   const selectionSort = async () => {
     shouldStopRef.current = false;
     setIsSorting(true);
+    setSortingAlgorithm('selection');
     try {
       let minIndex: number;
       let minValue: number;
@@ -168,12 +171,14 @@ export default function Home() {
       }
     } finally {
       setIsSorting(false);
+      setSortingAlgorithm(null);
     }
   };
 
   const insertionSort = async () => {
     shouldStopRef.current = false;
     setIsSorting(true);
+    setSortingAlgorithm('insertion');
     try {
       const newArray = [...array];
       for (let i = 1; i < newArray.length; i++) {
@@ -203,6 +208,7 @@ export default function Home() {
       }
     } finally {
       setIsSorting(false);
+      setSortingAlgorithm(null);
     }
   };
 
@@ -247,6 +253,7 @@ export default function Home() {
   const quickSort = async () => {
     shouldStopRef.current = false;
     setIsSorting(true);
+    setSortingAlgorithm('quick');
     try {
       const newArray = [...array];
       let low = 0;
@@ -266,6 +273,7 @@ export default function Home() {
       }
     } finally {
       setIsSorting(false);
+      setSortingAlgorithm(null);
     }
   };
 
@@ -321,6 +329,7 @@ export default function Home() {
   const mergeSort = async () => {
     shouldStopRef.current = false;
     setIsSorting(true);
+    setSortingAlgorithm('merge');
     try {
       if (!shouldStopRef.current) {
         const workingArray = [...array];
@@ -331,6 +340,7 @@ export default function Home() {
       }
     } finally {
       setIsSorting(false);
+      setSortingAlgorithm(null);
     }
   };
 
@@ -378,7 +388,64 @@ export default function Home() {
         </div>
         {isSorting && !sorted && (
           <div className={`${styles.controls} ${styles.sorted}`}>
-            <p>Sorting...</p>
+            {sortingAlgorithm == "bubble" && (
+              <div className={styles.description}>
+                <p className={styles.descriptionTitle}>Sorting with Bubble Sort:</p>
+                <ol>
+                  <li>Go through the array, one value at a time.</li>
+                  <li>For each value, compare the value with the next value.</li>
+                  <li>If the value is higher than the next one, swap the values so that the highest value comes last.</li>
+                  <li>Go through the array as many times as there are values in the array.</li>
+                </ol>
+                <p>The Bubble Sort algorithm loops through every value in the array, comparing it to the value next to it. So for an array of <strong>n</strong> values, there must be <strong>n</strong> comparisons in one loop.And after one loop, the array is looped through again and again <strong>n</strong> times. The time complexity for Bubble Sort is: <strong>O(n^2)</strong></p>
+              </div>
+            )}
+            {sortingAlgorithm == "selection" && (
+              <div className={styles.description}>
+                <p className={styles.descriptionTitle}>Sorting with Selection Sort:</p>
+                <ol>
+                  <li>Go through the array to find the lowest value.</li>
+                  <li>Move the lowest value to the front of the unsorted part of the array.</li>
+                  <li>Go through the array again as many times as there are values in the array.</li>
+                </ol>
+                <p>On average, about <strong>n/2</strong> elements are compared to find the lowest value in each loop, and Selection Sort must run the loop to find the lowest value approximately <strong>n</strong> times. We get time complexity: <strong>O(n/2*n) = O(n^2)</strong></p>
+              </div>
+            )}
+            {sortingAlgorithm == "insertion" && (
+              <div className={styles.description}>
+                <p className={styles.descriptionTitle}>Sorting with Insertion Sort:</p>
+                <ol>
+                  <li>Take the first value from the unsorted part of the array.</li>
+                  <li>Move the value into the correct place in the sorted part of the array.</li>
+                  <li>Go through the unsorted part of the array again as many times as there are values.</li>
+                </ol>
+                <p>Insertion Sort sorts an array of <strong>n</strong> values. On average, each value must be compared to about <strong>n/2</strong> values to find the correct place to insert it. We get time complexity: <strong>O(n/2*n) = O(n^2)</strong></p>
+              </div>
+            )}  
+            {sortingAlgorithm == "quick" && (
+              <div className={styles.description}>
+                <p className={styles.descriptionTitle}>Sorting with Quick Sort:</p>
+                <ol>
+                  <li>Choose a value in the array to be the pivot element, for example, the last value in the array.</li>
+                  <li>Order the rest of the array so that lower values than the pivot element are on the left, and higher values are on the right.</li>
+                  <li>Swap the pivot element with the first element of the higher values so that the pivot element lands in between the lower and higher values.</li>
+                  <li>Do the same operations (recursively) for the sub-arrays on the left and right side of the pivot element.</li>
+                </ol>
+                <p>The worst case scenario for Quicksort is <strong>O(n^2)</strong> values. This is when the pivot element is either the highest or lowest value in every sub-array, which leads to a lot of recursive calls, for example, if the array is sorted in descending order. On average, Quicksort has a time complexity of <strong>O(n * log n)</strong></p>
+              </div>
+            )}
+            {sortingAlgorithm == "merge" && (
+              <div className={styles.description}>
+                <p className={styles.descriptionTitle}>Sorting with Merge Sort:</p>
+                <ol>
+                  <li>Divide the unsorted array into two sub-arrays, half the size of the original.</li>
+                  <li>Continue to divide the sub-arrays as long as the current piece of the array has more than one element.</li>
+                  <li>Merge two sub-arrays together by always putting the lowest value first.</li>
+                  <li>Keep merging until there are no sub-arrays left.</li>
+                </ol>
+                <p>Merge Sort has a time complexity of <strong>O(n * log n)</strong> and the time complexity is pretty much the same for different kinds of arrays. The algorithm needs to split the array and merge it back together whether it is already sorted or completely shuffled.</p>
+              </div>
+            )}  
             <button className={styles.button} onClick={() => shouldStopRef.current = true}>Stop</button>
           </div>
         )}
